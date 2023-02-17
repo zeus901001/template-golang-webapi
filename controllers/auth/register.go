@@ -9,29 +9,35 @@ import (
 )
 
 /* Register action. */
-func Register(context *gin.Context) {
+func Register(c *gin.Context) {
 	var user models.User
 
-	if err := context.ShouldBindJSON(&user); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-		context.Abort()
+	rec := mysql.DB.First(&user, c.Params.ByName("email"))
+	if rec.Error != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	if rec.RowsAffected > 0 {
+		c.JSON(http.StatusOK, gin.H{"success": false, "msg": "Your email already exists."})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 	if err := user.HashPassword(user.Password); err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		context.Abort()
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	record := mysql.DB.Create(&user)
-	if record.Error != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"err": record.Error.Error()})
-		context.Abort()
+	if err := mysql.DB.Create(&user).Error; err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	accessToken := GenerateAccessTokenForUser(user)
+	accessToken := GenerateAccessTokenForUser(&user)
 	refreshToken := GenerateRefreshTokenForUser()
 
-	context.JSON(http.StatusCreated, gin.H{"accessToken": accessToken, "refreshToken": refreshToken})
+	c.JSON(http.StatusCreated, gin.H{"accessToken": accessToken, "refreshToken": refreshToken})
 }

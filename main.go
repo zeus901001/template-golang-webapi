@@ -26,7 +26,9 @@ func main() {
 		api.POST("/auth/register", auth.Register)
 		api.POST("/auth/updateAccessToken", auth.UpdateAccessToken)
 		api.POST("/auth/removeRefreshToken", auth.RemoveRefreshToken)
+
 		api.GET("/account/users", account.Users)
+		api.GET("/account/users/:id", account.UserEdit)
 	}
 
 	router.Run("localhost:8080")

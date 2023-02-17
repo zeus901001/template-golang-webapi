@@ -17,7 +17,7 @@ func RemoveRefreshToken(context *gin.Context) {
 }
 
 /* Generate access token for user. */
-func GenerateAccessTokenForUser(user models.User) string {
+func GenerateAccessTokenForUser(user *models.User) string {
 	return ""
 }
 
